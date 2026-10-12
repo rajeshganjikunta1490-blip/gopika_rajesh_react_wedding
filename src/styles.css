@@ -642,3 +642,7 @@ footer{background:#350c13;color:#e2c9b1}
 /* Mobile invitation zoom: pinch with two fingers or double-tap to zoom. */
 .lightbox-image-stage { overflow: hidden; touch-action: none; }
 .lightbox-image-stage img { touch-action: none; will-change: transform; }
+
+/* Accessible music on/off control */
+.music-toggle{pointer-events:auto;cursor:pointer;font:inherit;appearance:none;-webkit-appearance:none;transition:transform .18s ease,box-shadow .18s ease,background .18s ease}.music-toggle:hover{box-shadow:0 8px 24px #35212b20;transform:translateY(-1px)}.music-toggle:focus-visible{outline:2px solid currentColor;outline-offset:3px}.music-toggle.music-muted i{background:#c7b5b5;box-shadow:none;animation:none}.music-toggle span{white-space:nowrap}
+@media(max-width:760px){.music-toggle{max-width:calc(100vw - 20px);right:10px;bottom:10px}.music-toggle span{max-width:68vw;overflow:hidden;text-overflow:ellipsis}}
