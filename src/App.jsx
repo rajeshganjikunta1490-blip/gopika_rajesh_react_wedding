@@ -30,6 +30,7 @@ function App() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [lightbox, setLightbox] = useState(null);
   const audioRef = useRef(null);
+  const touchStartX = useRef(null);
   const [musicStarted, setMusicStarted] = useState(false);
 
   useEffect(() => {
@@ -112,6 +113,33 @@ function App() {
       window.removeEventListener('wheel', onFirstInteraction);
     };
   }, []);
+
+  useEffect(() => {
+    if (lightbox === null) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape' || event.key === 'Backspace') setLightbox(null);
+      if (event.key === 'ArrowLeft') setLightbox(current => current === null ? null : (current - 1 + slides.length) % slides.length);
+      if (event.key === 'ArrowRight') setLightbox(current => current === null ? null : (current + 1) % slides.length);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [lightbox]);
+
+  const onViewerTouchStart = (event) => {
+    touchStartX.current = event.changedTouches[0]?.clientX ?? null;
+  };
+  const onViewerTouchEnd = (event) => {
+    if (touchStartX.current === null) return;
+    const delta = event.changedTouches[0].clientX - touchStartX.current;
+    touchStartX.current = null;
+    if (Math.abs(delta) < 45) return;
+    setLightbox(current => current === null ? null : (delta < 0 ? (current + 1) % slides.length : (current - 1 + slides.length) % slides.length));
+  };
 
   useEffect(() => {
     const node = galleryRef.current;
@@ -222,11 +250,11 @@ function App() {
     <footer><div className="footer-monogram">G<span>♡</span>R</div><p>Made with love for our beginning.</p><span>15 · 11 · 2026</span></footer>
 
     <div className={`music-status ${musicStarted ? 'playing' : ''}`} aria-label={musicStarted ? 'Wedding music playing' : 'Wedding music will start when allowed'}><Music2 size={14}/><span>{musicStarted ? 'A little music, a lot of love' : 'Wedding melody'}</span><i/></div>
-    {lightbox !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Full invitation viewer" onClick={() => setLightbox(null)}>
-      <button className="lightbox-close" onClick={() => setLightbox(null)} aria-label="Close image">×</button>
-      <button className="lightbox-arrow lightbox-prev" onClick={e => { e.stopPropagation(); setLightbox((lightbox - 1 + slides.length) % slides.length); }} aria-label="Previous full invitation"><ArrowLeft size={24}/></button>
-      <img src={slides[lightbox].src} alt={slides[lightbox].alt} onClick={e => e.stopPropagation()}/>
-      <button className="lightbox-arrow lightbox-next" onClick={e => { e.stopPropagation(); setLightbox((lightbox + 1) % slides.length); }} aria-label="Next full invitation"><ArrowRight size={24}/></button>
+    {lightbox !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Full-screen invitation viewer" onClick={() => setLightbox(null)} onTouchStart={onViewerTouchStart} onTouchEnd={onViewerTouchEnd}>
+      <button className="lightbox-close" onClick={e => { e.stopPropagation(); setLightbox(null); }} aria-label="Close invitation viewer" title="Close">×</button>
+      <button className="lightbox-arrow lightbox-prev" onClick={e => { e.stopPropagation(); setLightbox((lightbox - 1 + slides.length) % slides.length); }} aria-label="Previous invitation"><ArrowLeft size={24}/></button>
+      <div className="lightbox-image-stage" onClick={e => e.stopPropagation()}><img src={slides[lightbox].src} alt={slides[lightbox].alt}/></div>
+      <button className="lightbox-arrow lightbox-next" onClick={e => { e.stopPropagation(); setLightbox((lightbox + 1) % slides.length); }} aria-label="Next invitation"><ArrowRight size={24}/></button>
       <div className="lightbox-count">{String(lightbox + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}</div>
     </div>}
   </>;
