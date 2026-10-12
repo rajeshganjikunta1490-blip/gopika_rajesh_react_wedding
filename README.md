@@ -21,3 +21,5 @@ A modern responsive React + Vite wedding invitation site.
 - Telugu background song, autoplay attempted immediately on page load and retried when the MP3 becomes ready, the page regains focus, or the visitor interacts
 
 Browsers may prevent autoplay with sound until the visitor interacts with the page. A site cannot reliably override this browser policy.
+
+Done
