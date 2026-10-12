@@ -121,8 +121,8 @@ function App() {
     document.body.style.overflow = 'hidden';
     const onKeyDown = (event) => {
       if (event.key === 'Escape' || event.key === 'Backspace') setLightbox(null);
-      if (event.key === 'ArrowLeft') { setImageRotation(90); setLightbox(current => current === null ? null : (current - 1 + slides.length) % slides.length); }
-      if (event.key === 'ArrowRight') { setImageRotation(90); setLightbox(current => current === null ? null : (current + 1) % slides.length); }
+      if (event.key === 'ArrowLeft') { setLightbox(current => current === null ? null : (current - 1 + slides.length) % slides.length); }
+      if (event.key === 'ArrowRight') { setLightbox(current => current === null ? null : (current + 1) % slides.length); }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => {
@@ -139,7 +139,7 @@ function App() {
     const delta = event.changedTouches[0].clientX - touchStartX.current;
     touchStartX.current = null;
     if (Math.abs(delta) < 45) return;
-    setImageRotation(90); setLightbox(current => current === null ? null : (delta < 0 ? (current + 1) % slides.length : (current - 1 + slides.length) % slides.length));
+    setLightbox(current => current === null ? null : (delta < 0 ? (current + 1) % slides.length : (current - 1 + slides.length) % slides.length));
   };
 
   useEffect(() => {
@@ -201,7 +201,7 @@ function App() {
         <div className="gallery-shell reveal">
           <div className="gallery-topline"><span>THE INVITATION SUITE</span><span>{String(activeSlide + 1).padStart(2,'0')} <i>/</i> 05</span></div>
           <div className="gallery-viewport" ref={galleryRef}>
-            {slides.map((slide, idx) => <button className="gallery-slide" key={slide.src} onClick={(event) => { event.preventDefault(); event.stopPropagation(); setImageRotation(90); setLightbox(idx); }} onPointerUp={(event) => { if (event.pointerType === 'touch') { event.preventDefault(); setImageRotation(90); setLightbox(idx); } }} aria-label={`Open ${slide.alt} full screen`}><img src={slide.src} alt={slide.alt}/><span className="zoom-hint">View full invitation <ArrowUpRight size={14}/></span></button>)}
+            {slides.map((slide, idx) => <button className="gallery-slide" key={slide.src} onClick={(event) => { event.preventDefault(); event.stopPropagation(); setImageRotation(window.matchMedia('(max-width: 760px)').matches ? 90 : 0); setLightbox(idx); }} onPointerUp={(event) => { if (event.pointerType === 'touch') { event.preventDefault(); setImageRotation(window.matchMedia('(max-width: 760px)').matches ? 90 : 0); setLightbox(idx); } }} aria-label={`Open ${slide.alt} full screen`}><img src={slide.src} alt={slide.alt}/><span className="zoom-hint">View full invitation <ArrowUpRight size={14}/></span></button>)}
           </div>
           <div className="gallery-controls">
             <div className="gallery-manual-controls">
@@ -233,11 +233,11 @@ function App() {
             <p>Pillar No. 685, near JNTU Metro Station<br/>Kukatpally, Hyderabad</p>
             <div className="venue-meta"><span><CalendarDays size={15}/> 15 November 2026</span><span><Clock3 size={15}/> 9:28 PM</span></div>
             <a className="venue-primary" href="https://www.google.com/maps/search/?api=1&query=Sri+Bramaramba+Mallikarjuna+Swamy+Kalyana+Mandapam+Kukatpally+Hyderabad" target="_blank" rel="noreferrer"><Navigation size={17}/> Get Directions <ArrowUpRight size={16}/></a>
-            <button className="venue-secondary" onClick={() => { setImageRotation(90); setLightbox(4); }}><QrCode size={17}/> View Venue QR <ArrowUpRight size={16}/></button>
+            <button className="venue-secondary" onClick={() => { setImageRotation(window.matchMedia('(max-width: 760px)').matches ? 90 : 0); setLightbox(4); }}><QrCode size={17}/> View Venue QR <ArrowUpRight size={16}/></button>
           </div>
           <div className="venue-art">
             <div className="venue-art-glow"/>
-            <img src="/assets/venue-qr-back.png" alt="Wedding invitation with venue QR code" onClick={() => { setImageRotation(90); setLightbox(4); }}/>
+            <img src="/assets/venue-qr-back.png" alt="Wedding invitation with venue QR code" onClick={() => { setImageRotation(window.matchMedia('(max-width: 760px)').matches ? 90 : 0); setLightbox(4); }}/>
             <div className="qr-caption"><QrCode size={15}/> SCAN FOR THE VENUE <span>Easy to find, easy to celebrate</span></div>
           </div>
         </div>
@@ -253,10 +253,10 @@ function App() {
     <div className={`music-status ${musicStarted ? 'playing' : ''}`} aria-label={musicStarted ? 'Wedding music playing' : 'Wedding music will start when allowed'}><Music2 size={14}/><span>{musicStarted ? 'A little music, a lot of love' : 'Wedding melody'}</span><i/></div>
     {lightbox !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Full-screen invitation viewer" onClick={() => setLightbox(null)} onTouchStart={onViewerTouchStart} onTouchEnd={onViewerTouchEnd}>
       <button className="lightbox-close" onClick={e => { e.stopPropagation(); setLightbox(null); }} aria-label="Close invitation viewer" title="Close">×</button>
-      <button className="lightbox-rotate" onClick={e => { e.stopPropagation(); setImageRotation(rotation => (rotation % 180 === 90 ? 0 : 90)); }} aria-label="Rotate invitation image" title="Rotate image"><RotateCw size={20}/><span>Rotate</span></button>
-      <button className="lightbox-arrow lightbox-prev" onClick={e => { e.stopPropagation(); setImageRotation(90); setLightbox((lightbox - 1 + slides.length) % slides.length); }} aria-label="Previous invitation"><ArrowLeft size={24}/></button>
+      {window.matchMedia('(max-width: 760px)').matches && <button className="lightbox-rotate" onClick={e => { e.stopPropagation(); setImageRotation(rotation => (rotation % 180 === 90 ? 0 : 90)); }} aria-label="Rotate invitation image" title="Rotate image"><RotateCw size={20}/><span>Rotate</span></button>}
+      <button className="lightbox-arrow lightbox-prev" onClick={e => { e.stopPropagation(); setLightbox((lightbox - 1 + slides.length) % slides.length); }} aria-label="Previous invitation"><ArrowLeft size={24}/></button>
       <div className="lightbox-image-stage" onClick={e => e.stopPropagation()}><img className={imageRotation % 180 !== 0 ? 'is-rotated' : ''} style={{ transform: `rotate(${imageRotation}deg)` }} src={slides[lightbox].src} alt={slides[lightbox].alt}/></div>
-      <button className="lightbox-arrow lightbox-next" onClick={e => { e.stopPropagation(); setImageRotation(90); setLightbox((lightbox + 1) % slides.length); }} aria-label="Next invitation"><ArrowRight size={24}/></button>
+      <button className="lightbox-arrow lightbox-next" onClick={e => { e.stopPropagation(); setLightbox((lightbox + 1) % slides.length); }} aria-label="Next invitation"><ArrowRight size={24}/></button>
       <div className="lightbox-count">{String(lightbox + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}</div>
     </div>}
   </>;
