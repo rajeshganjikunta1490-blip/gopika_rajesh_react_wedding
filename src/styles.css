@@ -426,3 +426,48 @@ footer{background:#350c13;color:#e2c9b1}
 .lightbox-prev{left:clamp(12px,3vw,38px)}.lightbox-next{right:clamp(12px,3vw,38px)}
 .lightbox-count{position:absolute;bottom:18px;left:50%;transform:translateX(-50%);color:#fff4e3;font-size:.75rem;letter-spacing:.14em}
 @media(max-width:760px){.gallery-manual-controls{gap:8px}.slide-arrow{padding:9px 10px;font-size:.65rem}.slide-arrow span{display:none}.lightbox-arrow{width:40px;height:40px}.lightbox-prev{left:8px}.lightbox-next{right:8px}.lightbox img{max-width:calc(100vw - 86px);max-height:84vh}}
+
+/* Mobile invitation gallery: make the original invitation artwork readable on phones.
+   Desktop gallery sizing above remains unchanged. */
+@media (max-width: 760px) {
+  .invitation-section .section-pad { padding-left: 8px; padding-right: 8px; }
+  .invitation-section .section-heading { padding-left: 10px; padding-right: 10px; }
+  .invitation-section .gallery-shell {
+    width: 100%;
+    max-width: none;
+    padding: 6px;
+    margin-left: auto;
+    margin-right: auto;
+    border-radius: 12px;
+  }
+  .invitation-section .gallery-viewport {
+    width: 100%;
+    gap: 8px;
+    border-radius: 8px;
+    align-items: flex-start;
+  }
+  .invitation-section .gallery-slide {
+    flex: 0 0 100%;
+    width: 100%;
+    min-width: 100%;
+    padding: 2px;
+    border-radius: 6px;
+    overflow: visible;
+  }
+  .invitation-section .gallery-slide img {
+    display: block;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    object-fit: contain;
+    object-position: center top;
+    border-radius: 4px;
+  }
+  .invitation-section .gallery-topline { padding: 5px 3px 9px; }
+  .invitation-section .gallery-controls { padding: 12px 3px 3px; }
+}
+@media (max-width: 380px) {
+  .invitation-section .gallery-shell { padding: 4px; }
+  .invitation-section .gallery-slide { padding: 1px; }
+  .invitation-section .gallery-topline { letter-spacing: .08em; }
+}
