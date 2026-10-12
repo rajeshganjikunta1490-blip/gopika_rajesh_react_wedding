@@ -59,7 +59,15 @@ function App() {
       const result = node.play();
       if (result && typeof result.then === 'function') {
         result.then(() => {
-          if (!disposed) setMusicStarted(true);
+          if (!disposed) {
+            setMusicStarted(true);
+            window.removeEventListener('pointerdown', onFirstInteraction);
+            window.removeEventListener('click', onFirstInteraction);
+            window.removeEventListener('keydown', onFirstInteraction);
+            window.removeEventListener('touchstart', onFirstInteraction);
+            window.removeEventListener('scroll', onFirstInteraction);
+            window.removeEventListener('wheel', onFirstInteraction);
+          }
         }).catch(() => {
           if (!disposed) setMusicStarted(false);
         });
@@ -79,9 +87,15 @@ function App() {
     window.addEventListener('focus', onPageShow);
     document.addEventListener('visibilitychange', onPageShow);
     // Fallback for browsers that reject autoplay with sound: start at the first allowed gesture.
-    window.addEventListener('pointerdown', onFirstInteraction, { once: true, passive: true });
-    window.addEventListener('keydown', onFirstInteraction, { once: true });
-    window.addEventListener('touchstart', onFirstInteraction, { once: true, passive: true });
+    // Keep retrying after user gestures until playback succeeds. A scroll event may not
+    // count as media activation in every browser, so don't remove the other fallbacks
+    // merely because an earlier scroll attempt was blocked.
+    window.addEventListener('pointerdown', onFirstInteraction, { passive: true });
+    window.addEventListener('click', onFirstInteraction, { passive: true });
+    window.addEventListener('keydown', onFirstInteraction);
+    window.addEventListener('touchstart', onFirstInteraction, { passive: true });
+    window.addEventListener('scroll', onFirstInteraction, { passive: true });
+    window.addEventListener('wheel', onFirstInteraction, { passive: true });
 
     return () => {
       disposed = true;
@@ -91,8 +105,11 @@ function App() {
       window.removeEventListener('focus', onPageShow);
       document.removeEventListener('visibilitychange', onPageShow);
       window.removeEventListener('pointerdown', onFirstInteraction);
+      window.removeEventListener('click', onFirstInteraction);
       window.removeEventListener('keydown', onFirstInteraction);
       window.removeEventListener('touchstart', onFirstInteraction);
+      window.removeEventListener('scroll', onFirstInteraction);
+      window.removeEventListener('wheel', onFirstInteraction);
     };
   }, []);
 
