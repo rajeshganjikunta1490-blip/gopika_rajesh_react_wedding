@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDown, ArrowUpRight, ArrowLeft, ArrowRight, CalendarDays, Clock3, MapPin, Heart, Sparkles, Navigation, QrCode, Flower2, Music2 } from 'lucide-react';
+import { ArrowDown, ArrowUpRight, ArrowLeft, ArrowRight, CalendarDays, Clock3, MapPin, Heart, Sparkles, Navigation, QrCode, Flower2, Music2, RotateCw } from 'lucide-react';
 
 const slides = [
   { src: '/assets/invitation-front.png', alt: 'Pallas invitation front cover', seconds: 10 },
@@ -29,6 +29,7 @@ function App() {
   const galleryRef = useRef(null);
   const [activeSlide, setActiveSlide] = useState(0);
   const [lightbox, setLightbox] = useState(null);
+  const [imageRotation, setImageRotation] = useState(0);
   const audioRef = useRef(null);
   const touchStartX = useRef(null);
   const [musicStarted, setMusicStarted] = useState(false);
@@ -200,7 +201,7 @@ function App() {
         <div className="gallery-shell reveal">
           <div className="gallery-topline"><span>THE INVITATION SUITE</span><span>{String(activeSlide + 1).padStart(2,'0')} <i>/</i> 05</span></div>
           <div className="gallery-viewport" ref={galleryRef}>
-            {slides.map((slide, idx) => <button className="gallery-slide" key={slide.src} onClick={() => setLightbox(idx)} aria-label={`Enlarge ${slide.alt}`}><img src={slide.src} alt={slide.alt}/><span className="zoom-hint">View full invitation <ArrowUpRight size={14}/></span></button>)}
+            {slides.map((slide, idx) => <button className="gallery-slide" key={slide.src} onClick={(event) => { event.preventDefault(); event.stopPropagation(); setImageRotation(0); setLightbox(idx); }} onPointerUp={(event) => { if (event.pointerType === 'touch') { event.preventDefault(); setImageRotation(0); setLightbox(idx); } }} aria-label={`Open ${slide.alt} full screen`}><img src={slide.src} alt={slide.alt}/><span className="zoom-hint">View full invitation <ArrowUpRight size={14}/></span></button>)}
           </div>
           <div className="gallery-controls">
             <div className="gallery-manual-controls">
@@ -252,8 +253,9 @@ function App() {
     <div className={`music-status ${musicStarted ? 'playing' : ''}`} aria-label={musicStarted ? 'Wedding music playing' : 'Wedding music will start when allowed'}><Music2 size={14}/><span>{musicStarted ? 'A little music, a lot of love' : 'Wedding melody'}</span><i/></div>
     {lightbox !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Full-screen invitation viewer" onClick={() => setLightbox(null)} onTouchStart={onViewerTouchStart} onTouchEnd={onViewerTouchEnd}>
       <button className="lightbox-close" onClick={e => { e.stopPropagation(); setLightbox(null); }} aria-label="Close invitation viewer" title="Close">×</button>
+      <button className="lightbox-rotate" onClick={e => { e.stopPropagation(); setImageRotation(rotation => (rotation + 90) % 360); }} aria-label="Rotate invitation image" title="Rotate image"><RotateCw size={20}/><span>Rotate</span></button>
       <button className="lightbox-arrow lightbox-prev" onClick={e => { e.stopPropagation(); setLightbox((lightbox - 1 + slides.length) % slides.length); }} aria-label="Previous invitation"><ArrowLeft size={24}/></button>
-      <div className="lightbox-image-stage" onClick={e => e.stopPropagation()}><img src={slides[lightbox].src} alt={slides[lightbox].alt}/></div>
+      <div className="lightbox-image-stage" onClick={e => e.stopPropagation()}><img className={imageRotation % 180 !== 0 ? 'is-rotated' : ''} style={{ transform: `rotate(${imageRotation}deg)` }} src={slides[lightbox].src} alt={slides[lightbox].alt}/></div>
       <button className="lightbox-arrow lightbox-next" onClick={e => { e.stopPropagation(); setLightbox((lightbox + 1) % slides.length); }} aria-label="Next invitation"><ArrowRight size={24}/></button>
       <div className="lightbox-count">{String(lightbox + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}</div>
     </div>}

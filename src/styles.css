@@ -584,3 +584,19 @@ footer{background:#350c13;color:#e2c9b1}
   .lightbox-image-stage { padding: 8px 70px 28px; }
   .lightbox-image-stage img { max-height: calc(100dvh - 36px); max-width: calc(100vw - 140px); }
 }
+
+/* Reliable tap target and rotation control in the full-screen invitation viewer. */
+.invitation-section .gallery-slide { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.invitation-section .gallery-slide .zoom-hint { pointer-events: none; }
+.lightbox-rotate {
+  position: absolute; top: max(14px, env(safe-area-inset-top)); left: max(14px, env(safe-area-inset-left)); z-index: 5;
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 42px; padding: 0 13px;
+  border: 1px solid rgba(255,232,190,.8); border-radius: 999px; background: rgba(80,16,27,.9); color: #fff8eb;
+  font-size: .78rem; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.lightbox-image-stage img { transition: transform .2s ease; }
+.lightbox-image-stage img.is-rotated { max-width: min(calc(100dvh - 120px), 100vw); max-height: min(calc(100vw - 120px), 100dvh); }
+@media (max-width: 760px) {
+  .lightbox-rotate { top: max(12px, env(safe-area-inset-top)); left: max(12px, env(safe-area-inset-left)); min-height: 42px; padding: 0 12px; }
+  .lightbox-image-stage img.is-rotated { max-width: calc(100dvh - 120px); max-height: calc(100vw - 100px); }
+}
