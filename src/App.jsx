@@ -201,7 +201,15 @@ function App() {
     if (imageZoom > 1.02 && panStart.current && event.touches.length === 1) {
       event.preventDefault();
       const touch = event.touches[0];
-      setImagePan({ x: panOrigin.current.x + touch.clientX - panStart.current.x, y: panOrigin.current.y + touch.clientY - panStart.current.y });
+      const screenDeltaX = touch.clientX - panStart.current.x;
+      const screenDeltaY = touch.clientY - panStart.current.y;
+      // The entire viewer is CSS-rotated on mobile landscape. Convert the finger's
+      // screen-space movement back into the image's local coordinate system so it
+      // follows the finger naturally in either orientation.
+      const isMobileLandscape = window.matchMedia('(max-width: 760px)').matches && imageRotation % 180 !== 0;
+      const deltaX = isMobileLandscape ? screenDeltaY : screenDeltaX;
+      const deltaY = isMobileLandscape ? -screenDeltaX : screenDeltaY;
+      setImagePan({ x: panOrigin.current.x + deltaX, y: panOrigin.current.y + deltaY });
     }
   };
   const onViewerTouchEnd = (event) => {
