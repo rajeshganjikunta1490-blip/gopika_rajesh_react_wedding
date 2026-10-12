@@ -30,6 +30,10 @@ function App() {
   const [activeSlide, setActiveSlide] = useState(0);
   const [lightbox, setLightbox] = useState(null);
   const [imageRotation, setImageRotation] = useState(0);
+  const [imageZoom, setImageZoom] = useState(1);
+  const pinchStartDistance = useRef(null);
+  const pinchStartZoom = useRef(1);
+  const lastTapTime = useRef(0);
   const audioRef = useRef(null);
   const touchStartX = useRef(null);
   const [musicStarted, setMusicStarted] = useState(false);
@@ -131,15 +135,49 @@ function App() {
     };
   }, [lightbox]);
 
+  const touchDistance = (touches) => {
+    if (!touches || touches.length < 2) return 0;
+    const dx = touches[0].clientX - touches[1].clientX;
+    const dy = touches[0].clientY - touches[1].clientY;
+    return Math.hypot(dx, dy);
+  };
   const onViewerTouchStart = (event) => {
+    if (event.touches.length >= 2) {
+      pinchStartDistance.current = touchDistance(event.touches);
+      pinchStartZoom.current = imageZoom;
+      touchStartX.current = null;
+      return;
+    }
     touchStartX.current = event.changedTouches[0]?.clientX ?? null;
   };
+  const onViewerTouchMove = (event) => {
+    if (event.touches.length >= 2 && pinchStartDistance.current) {
+      event.preventDefault();
+      const distance = touchDistance(event.touches);
+      if (distance > 0) setImageZoom(Math.min(4, Math.max(1, pinchStartZoom.current * distance / pinchStartDistance.current)));
+    }
+  };
   const onViewerTouchEnd = (event) => {
+    if (pinchStartDistance.current !== null) {
+      if (event.touches.length < 2) pinchStartDistance.current = null;
+      touchStartX.current = null;
+      return;
+    }
     if (touchStartX.current === null) return;
     const delta = event.changedTouches[0].clientX - touchStartX.current;
+    const startX = touchStartX.current;
     touchStartX.current = null;
-    if (Math.abs(delta) < 45) return;
+    if (imageZoom > 1.02 || Math.abs(delta) < 45) return;
     setLightbox(current => current === null ? null : (delta < 0 ? (current + 1) % slides.length : (current - 1 + slides.length) % slides.length));
+  };
+  const onViewerImageClick = () => {
+    const now = Date.now();
+    if (now - lastTapTime.current < 300) {
+      setImageZoom(current => current > 1 ? 1 : 2.5);
+      lastTapTime.current = 0;
+    } else {
+      lastTapTime.current = now;
+    }
   };
 
   useEffect(() => {
@@ -251,13 +289,13 @@ function App() {
     <footer><div className="footer-monogram">G<span>♡</span>R</div><p>Made with love for our beginning.</p><span>15 · 11 · 2026</span></footer>
 
     <div className={`music-status ${musicStarted ? 'playing' : ''}`} aria-label={musicStarted ? 'Wedding music playing' : 'Wedding music will start when allowed'}><Music2 size={14}/><span>{musicStarted ? 'A little music, a lot of love' : 'Wedding melody'}</span><i/></div>
-    {lightbox !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Full-screen invitation viewer" onClick={() => setLightbox(null)} onTouchStart={onViewerTouchStart} onTouchEnd={onViewerTouchEnd}>
+    {lightbox !== null && <div className="lightbox" role="dialog" aria-modal="true" aria-label="Full-screen invitation viewer" onClick={() => setLightbox(null)} onTouchStart={onViewerTouchStart} onTouchMove={onViewerTouchMove} onTouchEnd={onViewerTouchEnd}>
       <div className={`lightbox-content ${imageRotation % 180 !== 0 ? 'landscape-view' : 'portrait-view'}`} onClick={e => e.stopPropagation()}>
         <button className="lightbox-close" onClick={() => setLightbox(null)} aria-label="Close invitation viewer" title="Close">×</button>
-        {window.matchMedia('(max-width: 760px)').matches && <button className="lightbox-rotate" onClick={() => setImageRotation(rotation => (rotation % 180 === 90 ? 0 : 90))} aria-label="Rotate invitation orientation" title="Rotate orientation"><RotateCw size={20}/><span>Rotate</span></button>}
-        <button className="lightbox-arrow lightbox-prev" onClick={() => setLightbox((lightbox - 1 + slides.length) % slides.length)} aria-label="Previous invitation"><ArrowLeft size={24}/></button>
-        <div className="lightbox-image-stage"><img src={slides[lightbox].src} alt={slides[lightbox].alt}/></div>
-        <button className="lightbox-arrow lightbox-next" onClick={() => setLightbox((lightbox + 1) % slides.length)} aria-label="Next invitation"><ArrowRight size={24}/></button>
+        {window.matchMedia('(max-width: 760px)').matches && <button className="lightbox-rotate" onClick={() => { setImageZoom(1); setImageRotation(rotation => (rotation % 180 === 90 ? 0 : 90)); }} aria-label="Rotate invitation orientation" title="Rotate orientation"><RotateCw size={20}/><span>Rotate</span></button>}
+        <button className="lightbox-arrow lightbox-prev" onClick={() => { setImageZoom(1); setLightbox((lightbox - 1 + slides.length) % slides.length); }} aria-label="Previous invitation"><ArrowLeft size={24}/></button>
+        <div className="lightbox-image-stage"><img src={slides[lightbox].src} alt={slides[lightbox].alt} onClick={onViewerImageClick} style={{ transform: `scale(${imageZoom})`, cursor: imageZoom > 1 ? 'zoom-out' : 'zoom-in' }} draggable="false"/></div>
+        <button className="lightbox-arrow lightbox-next" onClick={() => { setImageZoom(1); setLightbox((lightbox + 1) % slides.length); }} aria-label="Next invitation"><ArrowRight size={24}/></button>
         <div className="lightbox-count">{String(lightbox + 1).padStart(2, '0')} / {String(slides.length).padStart(2, '0')}</div>
       </div>
     </div>}

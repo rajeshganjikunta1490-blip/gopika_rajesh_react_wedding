@@ -638,3 +638,7 @@ footer{background:#350c13;color:#e2c9b1}
 @media (min-width: 761px) {
   .lightbox-rotate { display: none !important; }
 }
+
+/* Mobile invitation zoom: pinch with two fingers or double-tap to zoom. */
+.lightbox-image-stage { overflow: hidden; touch-action: none; }
+.lightbox-image-stage img { touch-action: none; will-change: transform; }
