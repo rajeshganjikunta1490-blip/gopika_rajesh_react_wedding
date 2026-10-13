@@ -768,3 +768,15 @@ footer{background:#350c13;color:#e2c9b1}
   .gate-cover-image { height:clamp(76px,15dvh,112px); max-height:15dvh; }
   .gate-action { min-height:40px; }
 }
+
+
+/* Prevent the home page from scrolling behind the mobile cover or photo viewer. */
+html:has(.invitation-gate),
+html:has(.lightbox) { overflow: hidden !important; overscroll-behavior: none; }
+body:has(.invitation-gate),
+body:has(.lightbox) { overflow: hidden !important; overscroll-behavior: none; }
+.invitation-gate { overflow: hidden !important; overscroll-behavior: contain; touch-action: none; }
+.invitation-gate-open { touch-action: manipulation; }
+.lightbox { position: fixed !important; inset: 0 !important; width: 100vw; height: 100vh; height: 100dvh; overflow: hidden !important; overscroll-behavior: none; touch-action: none; }
+.lightbox-content, .lightbox-image-stage { overscroll-behavior: none; }
+.lightbox-image-stage { touch-action: none !important; }

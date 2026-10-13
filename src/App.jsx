@@ -168,8 +168,12 @@ function App() {
 
   useEffect(() => {
     if (lightbox === null) return undefined;
-    const previousOverflow = document.body.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousOverscroll = document.documentElement.style.overscrollBehavior;
     document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    document.documentElement.style.overscrollBehavior = 'none';
     const onKeyDown = (event) => {
       if (event.key === 'Escape' || event.key === 'Backspace') setLightbox(null);
       if (event.key === 'ArrowLeft') { setLightbox(current => current === null ? null : (current - 1 + slides.length) % slides.length); }
@@ -177,7 +181,9 @@ function App() {
     };
     window.addEventListener('keydown', onKeyDown);
     return () => {
-      document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overflow = previousHtmlOverflow;
+      document.documentElement.style.overscrollBehavior = previousOverscroll;
       window.removeEventListener('keydown', onKeyDown);
     };
   }, [lightbox]);
