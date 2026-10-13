@@ -144,7 +144,7 @@ function App() {
       }
     }
     setGateClosing(true);
-    window.setTimeout(() => setInvitationOpened(true), 850);
+    window.setTimeout(() => setInvitationOpened(true), 1750);
   };
 
   const toggleMusic = async () => {

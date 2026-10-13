@@ -682,21 +682,66 @@ footer{background:#350c13;color:#e2c9b1}
 .invitation-gate-open:hover .gate-action svg { transform: translate(3px,-2px); }
 .invitation-gate-open:active .gate-action { transform: scale(.97); filter: brightness(.97); }
 .invitation-gate-open:hover .gate-action { transform: translateY(-2px); background: #fff0d3; }
-.invitation-gate.is-closing { pointer-events: none; perspective: 1600px; transform-origin: 50% 50%; animation: gateOverlayFade .72s cubic-bezier(.4,0,.2,1) .12s forwards; }
-.invitation-gate.is-closing::before { animation: gateFrameFade .72s ease-in forwards; }
-.invitation-gate.is-closing::after { animation: gateTwinkleFade .45s ease-out forwards; }
-.invitation-gate.is-closing .invitation-gate-open { transform-origin: left center; transform-style: preserve-3d; backface-visibility: hidden; animation: gateCardLift .78s cubic-bezier(.4,0,.2,1) forwards; }
-.invitation-gate.is-closing .gate-cover-image { transform-origin: left center; animation: gateInvitationBloom .78s cubic-bezier(.4,0,.2,1) forwards; }
-.invitation-gate.is-closing .gate-ganesha-logo { animation: gateLogoBlessing .58s ease-in forwards; }
-@keyframes gateLogoBlessing { 0% { transform: scale(1); opacity: 1; } 45% { transform: scale(.96) translateY(-4px); opacity: .9; } 100% { transform: scale(.88) translateY(-10px); opacity: 0; } }
+.invitation-gate.is-closing { pointer-events: none; perspective: 1800px; transform-origin: 50% 50%; animation: gateOverlayFade 1.9s ease-in-out forwards; }
+.invitation-gate.is-closing::before { animation: gateFrameFade 1.7s ease-in-out forwards; }
+.invitation-gate.is-closing::after { animation: gateTwinkleFade 1.1s ease-out forwards; }
+.invitation-gate.is-closing .invitation-gate-open { transform-origin: left center; transform-style: preserve-3d; backface-visibility: hidden; will-change: transform, opacity; animation: gateDoorOpen 1.78s cubic-bezier(.45,.04,.2,1) both; }
+.invitation-gate.is-closing .gate-cover-image { animation: none; }
+.invitation-gate.is-closing .gate-ganesha-logo { animation: none; }
+@keyframes gateLogoBlessing { 0%,55% { transform: scale(1); opacity: 1; } 100% { transform: scale(.96); opacity: .72; } }
 @keyframes gateFadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes gateCardEnter { from { opacity: 0; transform: translateY(24px) scale(.975); filter: blur(8px); } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
 @keyframes gateLogoFloat { 0%,100% { transform: translateY(0); box-shadow: 0 0 0 6px rgba(238,205,143,.06), 0 0 34px rgba(240,190,104,.24); } 50% { transform: translateY(-4px); box-shadow: 0 0 0 8px rgba(238,205,143,.08), 0 0 42px rgba(240,190,104,.34); } }
 @keyframes gateTwinkle { from { opacity: .22; transform: scale(1); } to { opacity: .52; transform: scale(1.015); } }
-@keyframes gateOverlayFade { 0% { opacity: 1; } 100% { opacity: 0; visibility: hidden; } }
-@keyframes gateCardLift { 0% { opacity: 1; transform: perspective(1600px) rotateY(0deg) translateX(0) scale(1); } 24% { opacity: 1; transform: perspective(1600px) rotateY(-8deg) translateX(-1%) scale(1.01); } 68% { opacity: .92; transform: perspective(1600px) rotateY(-38deg) translateX(-8%) scale(.99); } 100% { opacity: 0; transform: perspective(1600px) rotateY(-72deg) translateX(-18%) scale(.96); } }
-@keyframes gateInvitationBloom { 0% { box-shadow: 0 12px 36px rgba(0,0,0,.3); transform: perspective(700px) rotateY(0deg) scale(1); } 55% { box-shadow: 0 12px 36px rgba(0,0,0,.22); transform: perspective(700px) rotateY(-14deg) scale(1.02); } 100% { box-shadow: 0 12px 36px rgba(0,0,0,0); transform: perspective(700px) rotateY(-32deg) scale(1.04); opacity: 0; } }
-@keyframes gateFrameFade { to { border-color: rgba(255,235,190,0); inset: 4px; } }
+@keyframes gateOverlayFade { 0%,72% { opacity: 1; visibility: visible; } 100% { opacity: 0; visibility: hidden; } }
+@keyframes gateDoorOpen { 0% { opacity: 1; transform: perspective(1800px) rotateY(0deg) translateX(0); } 18% { opacity: 1; transform: perspective(1800px) rotateY(-7deg) translateX(-.4%); } 48% { opacity: 1; transform: perspective(1800px) rotateY(-34deg) translateX(-2.5%); } 78% { opacity: .98; transform: perspective(1800px) rotateY(-76deg) translateX(-6%); } 94% { opacity: .72; transform: perspective(1800px) rotateY(-96deg) translateX(-9%); } 100% { opacity: 0; transform: perspective(1800px) rotateY(-104deg) translateX(-10%); } }
+@keyframes gateInvitationBloom { from { opacity: 1; } to { opacity: 1; } }
+@keyframes gateFrameFade { 0%,65% { border-color: rgba(255,235,190,.55); inset: 12px; } 100% { border-color: rgba(255,235,190,0); inset: 4px; } }
 @keyframes gateTwinkleFade { to { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .invitation-gate.is-closing, .invitation-gate.is-closing .invitation-gate-open, .invitation-gate.is-closing .gate-cover-image, .invitation-gate.is-closing .gate-ganesha-logo { animation-duration: .01ms; } }
 @media (max-height: 700px) { .invitation-gate-open { gap: 6px; padding: 12px 16px; } .gate-cover-image { width: min(28vw, 110px); max-height: 18vh; } .gate-cover-image img { max-height: 18vh; } .gate-ganesha-logo { width: 94px; } }
+
+/* Coordinated cover opening: preserve the original cover UI and animate it as one layer. */
+.invitation-gate {
+  animation: none;
+  will-change: opacity;
+  -webkit-backface-visibility: hidden;
+}
+.invitation-gate::after { animation: none !important; }
+.invitation-gate-open {
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+  filter: none !important;
+  transform-origin: left center;
+  transform-style: preserve-3d;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.invitation-gate.is-closing {
+  pointer-events: none;
+  transform: none !important;
+  animation: gateOverlayFadeCoordinated 1.75s linear forwards !important;
+}
+.invitation-gate.is-closing::before,
+.invitation-gate.is-closing::after { animation: none !important; }
+.invitation-gate.is-closing .invitation-gate-open {
+  will-change: transform;
+  opacity: 1 !important;
+  filter: none !important;
+  animation: gateDoorOpenCoordinated 1.75s cubic-bezier(.42, 0, .28, 1) forwards !important;
+}
+.invitation-gate.is-closing .gate-cover-image,
+.invitation-gate.is-closing .gate-ganesha-logo,
+.invitation-gate.is-closing .gate-action { animation: none !important; }
+@keyframes gateDoorOpenCoordinated {
+  0% { transform: perspective(1800px) rotateY(0deg); }
+  100% { transform: perspective(1800px) rotateY(-104deg); }
+}
+@keyframes gateOverlayFadeCoordinated {
+  0%, 76% { opacity: 1; visibility: visible; }
+  100% { opacity: 0; visibility: hidden; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .invitation-gate.is-closing,
+  .invitation-gate.is-closing .invitation-gate-open { animation-duration: .01ms !important; }
+}
