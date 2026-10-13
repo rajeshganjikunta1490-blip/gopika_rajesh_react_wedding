@@ -41,6 +41,8 @@ function App() {
   const touchStartX = useRef(null);
   const [musicStarted, setMusicStarted] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState(true);
+  const [invitationOpened, setInvitationOpened] = useState(false);
+  const [gateClosing, setGateClosing] = useState(false);
 
   useEffect(() => {
     const node = galleryRef.current;
@@ -63,49 +65,36 @@ function App() {
       setMusicStarted(false);
       return undefined;
     }
-
     node.volume = 0.55;
     node.loop = true;
     node.preload = 'auto';
 
-    // Call play() immediately on load and synchronously inside the first real
-    // browser gesture. Synthetic clicks cannot grant autoplay permission.
+    // Start immediately, then retry when the audio is ready or the page becomes active.
+    // Browsers may still block audible autoplay until a visitor gesture; JavaScript cannot override that policy.
     const tryPlay = () => {
       if (disposed || !node || !node.paused) return;
-      let playPromise;
-      try {
-        playPromise = node.play();
-      } catch {
-        if (!disposed) setMusicStarted(false);
-        return;
-      }
-      if (playPromise && typeof playPromise.then === 'function') {
-        playPromise.then(() => {
-          if (disposed) return;
-          setMusicStarted(true);
-          removeInteractionListeners();
+      const result = node.play();
+      if (result && typeof result.then === 'function') {
+        result.then(() => {
+          if (!disposed) {
+            setMusicStarted(true);
+            window.removeEventListener('pointerdown', onFirstInteraction);
+            window.removeEventListener('click', onFirstInteraction);
+            window.removeEventListener('keydown', onFirstInteraction);
+            window.removeEventListener('touchstart', onFirstInteraction);
+            window.removeEventListener('scroll', onFirstInteraction);
+            window.removeEventListener('wheel', onFirstInteraction);
+          }
         }).catch(() => {
           if (!disposed) setMusicStarted(false);
         });
       }
     };
-
-    const onFirstInteraction = () => tryPlay();
     const onCanPlay = () => tryPlay();
     const onPageShow = () => tryPlay();
+    const onFirstInteraction = () => tryPlay();
 
-    function removeInteractionListeners() {
-      // Capture-phase document listeners still receive the first tap/click even
-      // if a React component stops event propagation. They do not cancel or
-      // change the visitor's normal click action.
-      document.removeEventListener('pointerdown', onFirstInteraction, true);
-      document.removeEventListener('click', onFirstInteraction, true);
-      document.removeEventListener('touchstart', onFirstInteraction, true);
-      document.removeEventListener('keydown', onFirstInteraction, true);
-      window.removeEventListener('scroll', onFirstInteraction);
-      window.removeEventListener('wheel', onFirstInteraction);
-    }
-
+    // Multiple immediate/ready-state attempts help when the network has not loaded the MP3 yet.
     tryPlay();
     if (node.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
       node.addEventListener('canplay', onCanPlay);
@@ -114,14 +103,14 @@ function App() {
     window.addEventListener('pageshow', onPageShow);
     window.addEventListener('focus', onPageShow);
     document.addEventListener('visibilitychange', onPageShow);
-
-    // Use capture phase so the first genuine interaction anywhere in the page
-    // can start audio before any target handler runs. Do not synthesize a click
-    // or preventDefault: browsers do not treat synthetic clicks as user consent.
-    document.addEventListener('pointerdown', onFirstInteraction, { capture: true, passive: true });
-    document.addEventListener('click', onFirstInteraction, { capture: true, passive: true });
-    document.addEventListener('touchstart', onFirstInteraction, { capture: true, passive: true });
-    document.addEventListener('keydown', onFirstInteraction, true);
+    // Fallback for browsers that reject autoplay with sound: start at the first allowed gesture.
+    // Keep retrying after user gestures until playback succeeds. A scroll event may not
+    // count as media activation in every browser, so don't remove the other fallbacks
+    // merely because an earlier scroll attempt was blocked.
+    window.addEventListener('pointerdown', onFirstInteraction, { passive: true });
+    window.addEventListener('click', onFirstInteraction, { passive: true });
+    window.addEventListener('keydown', onFirstInteraction);
+    window.addEventListener('touchstart', onFirstInteraction, { passive: true });
     window.addEventListener('scroll', onFirstInteraction, { passive: true });
     window.addEventListener('wheel', onFirstInteraction, { passive: true });
 
@@ -132,9 +121,31 @@ function App() {
       window.removeEventListener('pageshow', onPageShow);
       window.removeEventListener('focus', onPageShow);
       document.removeEventListener('visibilitychange', onPageShow);
-      removeInteractionListeners();
+      window.removeEventListener('pointerdown', onFirstInteraction);
+      window.removeEventListener('click', onFirstInteraction);
+      window.removeEventListener('keydown', onFirstInteraction);
+      window.removeEventListener('touchstart', onFirstInteraction);
+      window.removeEventListener('scroll', onFirstInteraction);
+      window.removeEventListener('wheel', onFirstInteraction);
     };
   }, [musicEnabled]);
+
+  const openInvitation = () => {
+    if (gateClosing || invitationOpened) return;
+    // Start audio synchronously from the visitor's genuine tap, then play the
+    // transition before revealing the invitation underneath.
+    const node = audioRef.current;
+    if (node && musicEnabled) {
+      node.volume = 0.55;
+      node.loop = true;
+      const playAttempt = node.play();
+      if (playAttempt && typeof playAttempt.then === 'function') {
+        playAttempt.then(() => setMusicStarted(true)).catch(() => setMusicStarted(false));
+      }
+    }
+    setGateClosing(true);
+    window.setTimeout(() => setInvitationOpened(true), 850);
+  };
 
   const toggleMusic = async () => {
     const node = audioRef.current;
@@ -272,6 +283,17 @@ function App() {
 
   return <>
     <audio ref={audioRef} src="/assets/telugu-romantic.mp3" loop preload="auto" autoPlay />
+    {!invitationOpened && <div className={`invitation-gate${gateClosing ? ' is-closing' : ''}`} role="dialog" aria-modal="true" aria-label="Open wedding invitation">
+      <button className="invitation-gate-open" type="button" onClick={openInvitation} aria-label="Open wedding invitation and start music" disabled={gateClosing}>
+        <span className="gate-ganesha-logo" aria-hidden="true"><img src="/assets/ganesha-emblem.png" alt="" /></span>
+        <span className="gate-eyebrow">WITH THE BLESSINGS OF OUR ELDERS</span>
+        <span className="gate-title">Palla's Wedding Invitation</span>
+        <span className="gate-names">Gopika Lakshmi Priya <i>with</i> Rajesh Kumar</span>
+        <span className="gate-date">15 November 2026 · 9:28 PM</span>
+        <span className="gate-cover-image"><img src="/assets/invitation-front.png" alt="Wedding invitation cover" /></span>
+        <span className="gate-action">Open invitation <ArrowUpRight size={16}/></span>
+      </button>
+    </div>}
     <div className="ambient ambient-one" aria-hidden="true" /><div className="ambient ambient-two" aria-hidden="true" />
     <header className="topbar">
       <a className="wordmark" href="#home"><span className="mark ganesha-mark" aria-hidden="true">ॐ</span><span>Gopika Weds Rajesh</span></a>
