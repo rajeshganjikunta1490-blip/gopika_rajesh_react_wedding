@@ -92,7 +92,11 @@ function App() {
     const onPageShow = () => tryPlay();
     const onFirstInteraction = () => tryPlay();
 
-    // Multiple immediate/ready-state attempts help when the network has not loaded the MP3 yet.
+    // Attempt audible autoplay immediately and again as the page/audio finishes initializing.
+    // These retries help with loading timing, but cannot bypass browser autoplay permission rules.
+    const startupRetryTimers = [0, 250, 750, 1500, 3000, 5000].map((delay) =>
+      window.setTimeout(tryPlay, delay)
+    );
     tryPlay();
     if (node.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
       node.addEventListener('canplay', onCanPlay);
@@ -114,6 +118,7 @@ function App() {
 
     return () => {
       disposed = true;
+      startupRetryTimers.forEach((timer) => window.clearTimeout(timer));
       node.removeEventListener('canplay', onCanPlay);
       node.removeEventListener('loadeddata', onCanPlay);
       window.removeEventListener('pageshow', onPageShow);
