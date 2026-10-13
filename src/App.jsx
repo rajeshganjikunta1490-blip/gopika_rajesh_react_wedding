@@ -63,40 +63,49 @@ function App() {
       setMusicStarted(false);
       return undefined;
     }
+
     node.volume = 0.55;
     node.loop = true;
     node.preload = 'auto';
 
-    // Start immediately, then retry when the audio is ready or the page becomes active.
-    // Browsers may still block audible autoplay until a visitor gesture; JavaScript cannot override that policy.
+    // Call play() immediately on load and synchronously inside the first real
+    // browser gesture. Synthetic clicks cannot grant autoplay permission.
     const tryPlay = () => {
       if (disposed || !node || !node.paused) return;
-      const result = node.play();
-      if (result && typeof result.then === 'function') {
-        result.then(() => {
-          if (!disposed) {
-            setMusicStarted(true);
-            window.removeEventListener('pointerdown', onFirstInteraction);
-            window.removeEventListener('click', onFirstInteraction);
-            window.removeEventListener('keydown', onFirstInteraction);
-            window.removeEventListener('touchstart', onFirstInteraction);
-            window.removeEventListener('scroll', onFirstInteraction);
-            window.removeEventListener('wheel', onFirstInteraction);
-          }
+      let playPromise;
+      try {
+        playPromise = node.play();
+      } catch {
+        if (!disposed) setMusicStarted(false);
+        return;
+      }
+      if (playPromise && typeof playPromise.then === 'function') {
+        playPromise.then(() => {
+          if (disposed) return;
+          setMusicStarted(true);
+          removeInteractionListeners();
         }).catch(() => {
           if (!disposed) setMusicStarted(false);
         });
       }
     };
+
+    const onFirstInteraction = () => tryPlay();
     const onCanPlay = () => tryPlay();
     const onPageShow = () => tryPlay();
-    const onFirstInteraction = () => tryPlay();
 
-    // Attempt audible autoplay immediately and again as the page/audio finishes initializing.
-    // These retries help with loading timing, but cannot bypass browser autoplay permission rules.
-    const startupRetryTimers = [0, 250, 750, 1500, 3000, 5000].map((delay) =>
-      window.setTimeout(tryPlay, delay)
-    );
+    function removeInteractionListeners() {
+      // Capture-phase document listeners still receive the first tap/click even
+      // if a React component stops event propagation. They do not cancel or
+      // change the visitor's normal click action.
+      document.removeEventListener('pointerdown', onFirstInteraction, true);
+      document.removeEventListener('click', onFirstInteraction, true);
+      document.removeEventListener('touchstart', onFirstInteraction, true);
+      document.removeEventListener('keydown', onFirstInteraction, true);
+      window.removeEventListener('scroll', onFirstInteraction);
+      window.removeEventListener('wheel', onFirstInteraction);
+    }
+
     tryPlay();
     if (node.readyState < HTMLMediaElement.HAVE_FUTURE_DATA) {
       node.addEventListener('canplay', onCanPlay);
@@ -105,31 +114,25 @@ function App() {
     window.addEventListener('pageshow', onPageShow);
     window.addEventListener('focus', onPageShow);
     document.addEventListener('visibilitychange', onPageShow);
-    // Fallback for browsers that reject autoplay with sound: start at the first allowed gesture.
-    // Keep retrying after user gestures until playback succeeds. A scroll event may not
-    // count as media activation in every browser, so don't remove the other fallbacks
-    // merely because an earlier scroll attempt was blocked.
-    window.addEventListener('pointerdown', onFirstInteraction, { passive: true });
-    window.addEventListener('click', onFirstInteraction, { passive: true });
-    window.addEventListener('keydown', onFirstInteraction);
-    window.addEventListener('touchstart', onFirstInteraction, { passive: true });
+
+    // Use capture phase so the first genuine interaction anywhere in the page
+    // can start audio before any target handler runs. Do not synthesize a click
+    // or preventDefault: browsers do not treat synthetic clicks as user consent.
+    document.addEventListener('pointerdown', onFirstInteraction, { capture: true, passive: true });
+    document.addEventListener('click', onFirstInteraction, { capture: true, passive: true });
+    document.addEventListener('touchstart', onFirstInteraction, { capture: true, passive: true });
+    document.addEventListener('keydown', onFirstInteraction, true);
     window.addEventListener('scroll', onFirstInteraction, { passive: true });
     window.addEventListener('wheel', onFirstInteraction, { passive: true });
 
     return () => {
       disposed = true;
-      startupRetryTimers.forEach((timer) => window.clearTimeout(timer));
       node.removeEventListener('canplay', onCanPlay);
       node.removeEventListener('loadeddata', onCanPlay);
       window.removeEventListener('pageshow', onPageShow);
       window.removeEventListener('focus', onPageShow);
       document.removeEventListener('visibilitychange', onPageShow);
-      window.removeEventListener('pointerdown', onFirstInteraction);
-      window.removeEventListener('click', onFirstInteraction);
-      window.removeEventListener('keydown', onFirstInteraction);
-      window.removeEventListener('touchstart', onFirstInteraction);
-      window.removeEventListener('scroll', onFirstInteraction);
-      window.removeEventListener('wheel', onFirstInteraction);
+      removeInteractionListeners();
     };
   }, [musicEnabled]);
 
