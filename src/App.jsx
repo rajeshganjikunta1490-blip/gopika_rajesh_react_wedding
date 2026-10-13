@@ -91,8 +91,17 @@ function App() {
       }
     };
     const onCanPlay = () => tryPlay();
-    const onPageShow = () => tryPlay();
-    const onFirstInteraction = () => tryPlay();
+    const onPageShow = () => {
+      // Do not play music while the browser/tab is hidden or minimized.
+      if (document.visibilityState === 'hidden') {
+        node.pause();
+        return;
+      }
+      if (musicEnabled) tryPlay();
+    };
+    const onFirstInteraction = () => {
+      if (document.visibilityState !== 'hidden') tryPlay();
+    };
 
     // Multiple immediate/ready-state attempts help when the network has not loaded the MP3 yet.
     tryPlay();
@@ -102,6 +111,7 @@ function App() {
     }
     window.addEventListener('pageshow', onPageShow);
     window.addEventListener('focus', onPageShow);
+    window.addEventListener('pagehide', onPageShow);
     document.addEventListener('visibilitychange', onPageShow);
     // Fallback for browsers that reject autoplay with sound: start at the first allowed gesture.
     // Keep retrying after user gestures until playback succeeds. A scroll event may not
@@ -120,6 +130,7 @@ function App() {
       node.removeEventListener('loadeddata', onCanPlay);
       window.removeEventListener('pageshow', onPageShow);
       window.removeEventListener('focus', onPageShow);
+      window.removeEventListener('pagehide', onPageShow);
       document.removeEventListener('visibilitychange', onPageShow);
       window.removeEventListener('pointerdown', onFirstInteraction);
       window.removeEventListener('click', onFirstInteraction);
