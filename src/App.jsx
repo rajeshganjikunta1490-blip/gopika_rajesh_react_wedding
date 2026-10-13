@@ -38,6 +38,7 @@ function App() {
   const pinchStartZoom = useRef(1);
   const lastTapTime = useRef(0);
   const audioRef = useRef(null);
+  const resumeMusicAfterVisibility = useRef(false);
   const touchStartX = useRef(null);
   const [musicStarted, setMusicStarted] = useState(false);
   const [musicEnabled, setMusicEnabled] = useState(true);
@@ -91,13 +92,31 @@ function App() {
       }
     };
     const onCanPlay = () => tryPlay();
-    const onPageShow = () => {
-      // Do not play music while the browser/tab is hidden or minimized.
+    const onVisibilityChange = () => {
+      // Remember whether music was playing, pause immediately when hidden/minimized,
+      // and resume only if it was playing before the tab became hidden.
       if (document.visibilityState === 'hidden') {
+        resumeMusicAfterVisibility.current = !node.paused && musicEnabled;
         node.pause();
+        setMusicStarted(false);
         return;
       }
-      if (musicEnabled) tryPlay();
+      if (musicEnabled && resumeMusicAfterVisibility.current) {
+        resumeMusicAfterVisibility.current = false;
+        tryPlay();
+      }
+    };
+    const onPageShow = () => {
+      if (document.visibilityState === 'hidden') return;
+      if (musicEnabled && resumeMusicAfterVisibility.current) {
+        resumeMusicAfterVisibility.current = false;
+        tryPlay();
+      }
+    };
+    const onPageHide = () => {
+      resumeMusicAfterVisibility.current = !node.paused && musicEnabled;
+      node.pause();
+      setMusicStarted(false);
     };
     const onFirstInteraction = () => {
       if (document.visibilityState !== 'hidden') tryPlay();
@@ -111,8 +130,8 @@ function App() {
     }
     window.addEventListener('pageshow', onPageShow);
     window.addEventListener('focus', onPageShow);
-    window.addEventListener('pagehide', onPageShow);
-    document.addEventListener('visibilitychange', onPageShow);
+    window.addEventListener('pagehide', onPageHide);
+    document.addEventListener('visibilitychange', onVisibilityChange);
     // Fallback for browsers that reject autoplay with sound: start at the first allowed gesture.
     // Keep retrying after user gestures until playback succeeds. A scroll event may not
     // count as media activation in every browser, so don't remove the other fallbacks
@@ -130,8 +149,8 @@ function App() {
       node.removeEventListener('loadeddata', onCanPlay);
       window.removeEventListener('pageshow', onPageShow);
       window.removeEventListener('focus', onPageShow);
-      window.removeEventListener('pagehide', onPageShow);
-      document.removeEventListener('visibilitychange', onPageShow);
+      window.removeEventListener('pagehide', onPageHide);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('pointerdown', onFirstInteraction);
       window.removeEventListener('click', onFirstInteraction);
       window.removeEventListener('keydown', onFirstInteraction);
