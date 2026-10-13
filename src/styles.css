@@ -745,3 +745,26 @@ footer{background:#350c13;color:#e2c9b1}
   .invitation-gate.is-closing,
   .invitation-gate.is-closing .invitation-gate-open { animation-duration: .01ms !important; }
 }
+
+/* Mobile: full-screen original invitation door; preserve its existing visual design. */
+@media (max-width: 760px) {
+  .invitation-gate { inset:0; width:100vw; height:100vh; height:100dvh; min-height:100vh; min-height:100dvh; padding:max(12px,env(safe-area-inset-top)) 12px max(12px,env(safe-area-inset-bottom)); overflow:hidden; box-sizing:border-box; place-items:stretch; }
+  .invitation-gate::before { inset:8px; }
+  .invitation-gate-open { width:100%; height:100%; min-height:0; max-height:100%; box-sizing:border-box; overflow:hidden; justify-content:center; gap:clamp(5px,1.25dvh,12px); padding:clamp(10px,2.4dvh,22px) clamp(10px,4vw,20px); border-radius:0; border-color:rgba(238,205,143,.34); }
+  .gate-ganesha-logo { width:clamp(76px,22dvh,132px); max-width:34vw; flex:0 1 auto; margin-bottom:0; }
+  .gate-eyebrow { font-size:clamp(.55rem,1.45dvh,.68rem); }
+  .gate-title { font-size:clamp(1.25rem,4.7dvh,2rem); line-height:1.08; }
+  .gate-names { font-size:clamp(.8rem,2.4dvh,1.05rem); }
+  .gate-date { font-size:clamp(.68rem,1.8dvh,.8rem); }
+  .gate-cover-image { width:auto; height:clamp(90px,20dvh,170px); max-width:min(58vw,220px); max-height:20dvh; margin:0 auto; flex:0 1 auto; }
+  .gate-cover-image img { width:auto; height:100%; max-width:100%; max-height:100%; object-fit:contain; }
+  .gate-action { min-height:44px; padding:0 20px; font-size:.84rem; flex:0 0 auto; }
+  .invitation-gate.is-closing .invitation-gate-open { transform-origin:left center; }
+}
+@media (max-width:380px), (max-height:680px) and (max-width:760px) {
+  .invitation-gate-open { gap:5px; padding-top:8px; padding-bottom:8px; }
+  .gate-ganesha-logo { width:clamp(64px,16dvh,100px); }
+  .gate-title { font-size:clamp(1.12rem,3.7dvh,1.55rem); }
+  .gate-cover-image { height:clamp(76px,15dvh,112px); max-height:15dvh; }
+  .gate-action { min-height:40px; }
+}
